@@ -1,0 +1,5 @@
+# file(GLOB subdiv_src "*.cpp")
+# add_library(subdiv STATIC ${subdiv_src})
+# target_link_libraries(subdiv PRIVATE objLoader)
+add_library(subdiv INTERFACE)
+target_include_directories(subdiv INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -2,6 +2,7 @@
 #define SOLVER_BASE_H
 
 #include "tiny_obj_loader.h"
+#include <mutex>
 
 struct IntParam
 {

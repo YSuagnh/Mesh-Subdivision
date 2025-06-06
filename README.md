@@ -9,13 +9,15 @@
 
 # 编译说明
 
-1. 命令行键入`cd geometryCGAlgsDemo/build`
+1. 命令行键入：`sudo apt install libwayland-dev libxkbcommon-dev xorg-dev` 。这些包在从源码构建GLFW中需要，参考链接：https://www.glfw.org/docs/latest/compile.html
 
-2. 输入`cmake ../source`并运行
+2. 命令行键入`cd geometryCGAlgsDemo/build`
 
-3. 输入`cmake --build .`并运行
+3. 输入`cmake ../source`并运行
 
-4. 输入`./main`并运行
+4. 输入`cmake --build .`并运行
+
+5. 输入`./main`并运行
 
 # UI 说明
 

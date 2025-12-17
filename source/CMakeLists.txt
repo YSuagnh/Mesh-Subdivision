@@ -39,7 +39,7 @@ set(TINYCTHREAD "${GLFW_SOURCE_DIR}/deps/tinycthread.h"
 
 # set compile features
 add_library(main_compile_options INTERFACE)
-target_compile_features(main_compile_options INTERFACE cxx_std_20)
+target_compile_features(main_compile_options INTERFACE cxx_std_17)
 
 # create main
 if (DEBUG)
@@ -66,7 +66,7 @@ else()
 endif()
 
 
-target_link_libraries(loadShaders deps)
+# target_link_libraries(loadShaders deps)
 target_link_libraries(main imgui deps lib)
 target_link_libraries(main main_compile_options)
 

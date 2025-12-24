@@ -3,6 +3,7 @@
 
 #include "tiny_obj_loader.h"
 #include <deque>
+#include <array>
 #include <iterator>
 #include <math.h>
 

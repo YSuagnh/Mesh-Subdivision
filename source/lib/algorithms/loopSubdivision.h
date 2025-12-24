@@ -51,7 +51,105 @@ public:
     */
     void loopSubdivision(SDAttrib &sdattrib, std::vector<SDShape> &sdshapes)
     {
-        /* TODO: Complete this function*/
+        std::vector<SDVertex*> new_vs;
+
+        // 1. Update Even Vertices
+        for (SDVertex *v : sdattrib.vs) {
+            Point p_new;
+            if (isBoundary(v)) {
+                std::vector<SDVertex*> neighbors;
+                findVtxNeighbors(v, std::back_inserter(neighbors));
+                if (neighbors.size() >= 2) {
+                    Point p_neighbors = neighbors.front()->p + neighbors.back()->p;
+                    p_new = 0.75 * v->p + 0.125 * p_neighbors;
+                } else {
+                    p_new = v->p; 
+                }
+            } else {
+                std::vector<SDVertex*> neighbors;
+                findVtxNeighbors(v, std::back_inserter(neighbors));
+                int k = neighbors.size();
+                real_t b = beta(k);
+                Point sum_neighbors(0,0,0);
+                for(auto* n : neighbors) sum_neighbors = sum_neighbors + n->p;
+                p_new = (1.0 - k * b) * v->p + b * sum_neighbors;
+            }
+            SDVertex* newV = new SDVertex(p_new);
+            v->child = newV;
+            new_vs.push_back(newV);
+        }
+
+        // 2. Compute Odd Vertices
+        for (auto &shape : sdshapes) {
+            for (const SDEdge &e : shape.es) {
+                Point p_odd;
+                SDVertex *v1 = e.verts[0];
+                SDVertex *v2 = e.verts[1];
+
+                if (e.fs[1] == nullptr) { // Boundary edge
+                    p_odd = 0.5 * (v1->p + v2->p);
+                } else { // Interior edge
+                    SDVertex *v3 = e.fs[0]->otherVertex(&e);
+                    SDVertex *v4 = e.fs[1]->otherVertex(&e);
+                    p_odd = 0.375 * (v1->p + v2->p) + 0.125 * (v3->p + v4->p);
+                }
+                SDVertex* oddV = new SDVertex(p_odd);
+                new_vs.push_back(oddV);
+
+                // Assign oddV to faces
+                for(int i=0; i<2; ++i) {
+                    SDFace* f = e.fs[i];
+                    if(f) {
+                        int idx1 = f->getVertIndex(v1);
+                        int idx2 = f->getVertIndex(v2);
+                        int edgeIdx = -1;
+                        if (NEXT(idx1) == idx2) edgeIdx = idx1;
+                        else if (NEXT(idx2) == idx1) edgeIdx = idx2;
+                        
+                        if(edgeIdx != -1) {
+                            f->sdverts[edgeIdx] = oddV;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Re-triangulate
+        for (auto &shape : sdshapes) {
+            std::vector<SDFace*> new_fs;
+            for (SDFace *f : shape.fs) {
+                SDVertex *v0 = f->verts[0]->child;
+                SDVertex *v1 = f->verts[1]->child;
+                SDVertex *v2 = f->verts[2]->child;
+
+                SDVertex *e0 = f->sdverts[0]; // Edge 0-1
+                SDVertex *e1 = f->sdverts[1]; // Edge 1-2
+                SDVertex *e2 = f->sdverts[2]; // Edge 2-0
+
+                new_fs.push_back(new SDFace(v0, e0, e2));
+                new_fs.push_back(new SDFace(e0, v1, e1));
+                new_fs.push_back(new SDFace(e1, v2, e2));
+                new_fs.push_back(new SDFace(e0, e1, e2));
+
+                delete f; 
+            }
+            shape.fs = new_fs;
+            shape.es.clear(); 
+        }
+
+        // 4. Cleanup Old Vertices
+        for(auto* v : sdattrib.vs) {
+            delete v;
+        }
+        sdattrib.vs = new_vs;
+        
+        // Update indices for the new vertices
+        for (size_t i = 0; i < sdattrib.vs.size(); ++i) {
+            sdattrib.vs[i]->index = i;
+        }
+
+        sdattrib.ns.clear(); 
+        sdattrib.ts.clear(); 
     }
 };
 

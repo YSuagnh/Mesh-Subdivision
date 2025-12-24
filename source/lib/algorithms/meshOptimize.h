@@ -13,6 +13,8 @@
 #include <queue>
 #include <random>
 #include <mutex>
+#include <array>
+#include <functional>
 #include "MeshTopology.h"
 #include "solverBase.h"
 

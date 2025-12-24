@@ -1,2 +1,5 @@
 build
 .vscode
+.cache
+elf
+elf-18

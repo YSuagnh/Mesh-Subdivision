@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <thread>
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <any>
 #include "loopSubdivision.h"
 #include "root3Subdivision.h"
@@ -715,6 +715,10 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+
   window = glfwCreateWindow(width, height, "Obj viewer", NULL, NULL);
   if (window == NULL) {
     std::cerr << "Failed to open GLFW window. " << std::endl;
@@ -728,6 +732,17 @@ int main(int argc, char** argv) {
   std::cout << "Q, Esc : quit\n";
 
   glfwMakeContextCurrent(window);
+
+  if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
+    std::cerr << "Failed to initialize GLAD" << std::endl;
+    return -1;
+  }
+  
+  if (glGetString(GL_RENDERER))
+      std::cout << "Renderer: " << (const char*)glGetString(GL_RENDERER) << std::endl;
+  if (glGetString(GL_VERSION))
+      std::cout << "OpenGL version supported: " << (const char*)glGetString(GL_VERSION) << std::endl;
+
   glfwSwapInterval(1);
 
   // Callback
@@ -736,12 +751,6 @@ int main(int argc, char** argv) {
   glfwSetMouseButtonCallback(window, clickFunc);
   glfwSetCursorPosCallback(window, motionFunc);
   glfwSetScrollCallback(window, scrollFunc);
-
-  glewExperimental = true;
-  if (glewInit() != GLEW_OK) {
-    std::cerr << "Failed to initialize GLEW." << std::endl;
-    return -1;
-  }
 
   reshapeFunc(window, width, height);
 

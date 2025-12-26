@@ -56,11 +56,10 @@ public:
         
         //原模型中的点位置变换
         for(auto x : sdattrib.vs) {
-            auto new_p = new SDVertex();
+            auto new_p = new_vs.emplace_back(new SDVertex());
             std::vector<SDVertex*> neibor;
             findVtxNeighbors(x, std::back_inserter(neibor));
-            new_p->index = new_vs.size();
-            new_p->valence = neibor.size();
+            new_p->index = new_vs.size() - 1;
             if(isBoundary(x)) {
                 new_p->p = neibor.size() > 1 ? 
                     0.75 * x->p + 0.125 * (neibor.back()->p + neibor[0]->p) : x->p;
@@ -72,15 +71,13 @@ public:
                 new_p->p = (1.0 - k * b) * x->p + b * sum;
             }
             x->child = new_p;
-            new_vs.emplace_back(new_p);
         }
 
         //每条边上新增一个点
-        for(auto& shape : sdshapes) {
-            for(auto e : shape.es) {
-                auto new_p = new SDVertex();
-                new_p->valence = 2;
-                new_p->index = new_vs.size();
+        for(auto &shape : sdshapes) {
+            for(auto &e : shape.es) {
+                auto new_p = new_vs.emplace_back(new SDVertex());
+                new_p->index = new_vs.size() - 1;
                 auto v1 = e.verts[0];
                 auto v2 = e.verts[1];
                 if(isBoundary(e)) {
@@ -90,7 +87,6 @@ public:
                     auto v4 = e.fs[1]->otherVertex(&e);
                     new_p->p = 0.375 * (v1->p + v2->p) + 0.125 * (v3->p + v4->p);
                 }
-                new_vs.emplace_back(new_p);
 
                 for(int i = 0; i < 2; ++i) {
                     auto fc = e.fs[i];
@@ -103,7 +99,7 @@ public:
         }
 
         //重构所有的面
-        for(auto& shape : sdshapes) {
+        for(auto &shape : sdshapes) {
             std::vector<SDFace*> new_fs;
             for(auto fc : shape.fs) {
                 for(int i = 0; i < 3; ++i) {
@@ -121,11 +117,14 @@ public:
                 delete fc;
             }
             shape.fs.swap(new_fs);
-            shape.es.clear();
         }
         
         for(auto x : sdattrib.vs) delete x;
+        for(auto x : sdattrib.ns) delete x;
+        for(auto x : sdattrib.ts) delete x;
         sdattrib.vs.swap(new_vs);
+        sdattrib.ns.clear();
+        sdattrib.ts.clear();
     }
 };
 

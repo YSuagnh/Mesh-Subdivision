@@ -2,6 +2,8 @@
 #define ROOT3_SUBDIVISION_H
 
 #include <cmath>
+#include <iterator>
+#include <vector>
 #include "solverBase.h"
 #include "MeshTopology.h"
 
@@ -49,9 +51,55 @@ public:
     */
     void root3Subdivision(SDAttrib &sdattrib, std::vector<SDShape> &sdshapes)
     {
-        /*TODO: complete this function*/
-    }
+        std::vector<SDVertex*> new_vs;
+        for(auto x : sdattrib.vs) {
+            auto new_p = new_vs.emplace_back(new SDVertex(x->p));
+            std::vector<SDVertex*> neibor;
+            findVtxNeighbors(x, std::back_inserter(neibor));
+            new_p->index = new_vs.size() - 1;
+            new_p->valence = neibor.size();
+            oneRingRule(neibor.begin(), neibor.end(), new_p, alpha(new_p->valence));
+            x->child = new_p;
+        }
 
+        for(auto &shape : sdshapes) {
+            for(auto fc : shape.fs) {
+                auto new_p = new_vs.emplace_back(new SDVertex());
+                new_p->index = new_vs.size() - 1;
+                new_p->valence = 6;
+                for(int i = 0; i < 3; ++i) new_p->p = new_p->p + fc->verts[i]->p;
+                new_p->p = new_p->p / 3;
+                fc->sdverts[0] = new_p;
+            }
+        }
+
+        for(auto &shape : sdshapes) {
+            std::vector<SDFace*> new_fs;
+            for(auto fc : shape.fs) {
+                for(int i = 0; i < 3; ++i) {
+                    auto nfc = fc->neighborFs[i];
+                    if(nfc) {
+                        auto v = fc->sdverts[0];
+                        auto nv = nfc->sdverts[0];
+                        auto p = fc->verts[i]->child;
+                        new_fs.emplace_back(new SDFace(
+                            fc->sdverts[0],
+                            nfc->sdverts[0],
+                            fc->verts[i]->child
+                        ));
+                    }
+                }
+            }
+            for(auto fc : shape.fs) delete fc;
+            shape.fs.swap(new_fs);
+        }
+        for(auto x : sdattrib.vs) delete x;
+        for(auto x : sdattrib.ns) delete x;
+        for(auto x : sdattrib.ts) delete x;
+        sdattrib.vs.swap(new_vs);
+        sdattrib.ns.clear();
+        sdattrib.ts.clear();
+    }
 };
 
 template <class It>
